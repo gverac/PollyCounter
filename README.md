@@ -53,15 +53,16 @@ Handy for re-flashing without having to physically reach the BOOTSEL button.
 ## Project layout
 
 ```
-main.c             Boot + main loop, callbacks wiring modules together
-state.c/h          Persistent count/target — written to last flash sector with CRC
-display.c/h        ST7735 driver (hand-rolled), screen layouts
-gfx.c/h            Drawing primitives and text rendering
-font8x8.h          Embedded 8×8 bitmap font (printable ASCII)
-encoder.c/h        IRQ-driven rotary encoder + short/long press detection
-buttons.c/h        Debounced +/- buttons
-power.c/h          PWM backlight, auto-dim, dormant sleep with GPIO wake
-pet.c/h            On-screen pet animation
+src/
+  main.c           Boot + main loop, callbacks wiring modules together
+  state.c/h        Persistent count/target — written to last flash sector with CRC
+  display.c/h      ST7735 driver (hand-rolled), screen layouts
+  gfx.c/h          Drawing primitives and text rendering
+  font8x8.h        Embedded 8×8 bitmap font (printable ASCII)
+  encoder.c/h      IRQ-driven rotary encoder + short/long press detection
+  buttons.c/h      Debounced +/- buttons
+  power.c/h        PWM backlight, auto-dim, dormant sleep with GPIO wake
+  pet.c/h          On-screen pet animation
 tools/png2c.py     Helper to convert PNG sprites to C headers
 CMakeLists.txt
 pico_sdk_import.cmake
@@ -117,7 +118,7 @@ cmake -DPICO_BOARD=pico ..
 make -j
 ```
 
-Output: `build/stitch_counter.uf2`.
+Output: `build/polly_counter.uf2`.
 
 ## Flash
 
@@ -126,13 +127,13 @@ Two options.
 **1. BOOTSEL drag-and-drop**
 
 Hold the BOOTSEL button on the Pico while plugging in USB. It mounts as a USB
-drive named `RPI-RP2`. Copy `build/stitch_counter.uf2` to it. The Pico reboots
+drive named `RPI-RP2`. Copy `build/polly_counter.uf2` to it. The Pico reboots
 into the new firmware.
 
 **2. picotool**
 
 ```bash
-picotool load -fx build/stitch_counter.uf2
+picotool load -fx build/polly_counter.uf2
 ```
 
 `-f` forces reboot into BOOTSEL via USB; `-x` runs the program after loading.
