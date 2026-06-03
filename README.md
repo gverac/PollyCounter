@@ -19,6 +19,10 @@ but it can count anything. The screen shows the current **count** and a
 **target**. The count is persisted to flash, so it survives sleep and
 power-off.
 
+## 3D Models
+
+You can find STLs and STEP files for this project in Printables [here](https://www.printables.com/model/1742448-polly-counter-a-knitting-counter).
+
 ### Controls
 
 - **+ button** — increment the count by one.
