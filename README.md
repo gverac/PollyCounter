@@ -75,7 +75,33 @@ pico_extras_import.cmake
 - ST7735 128×160 SPI TFT
 - Rotary encoder with push switch
 - Two momentary buttons (+/−)
-- See the pin assignments at the top of each `*.c` module for wiring.
+
+### Wiring / pin map
+
+All GPIO numbers are RP2040 GPIO (the `GPxx` labels on the Pico pinout, not
+the physical header pin numbers).
+
+| Peripheral             | Signal            | Pico pin   |
+|------------------------|-------------------|----------  |
+| ST7735 TFT             | SCK               | GP18       |
+|                        | SDA / MOSI        | GP19       |
+|                        | RST               | GP20       |
+|                        | A0 / DC           | GP21       |
+|                        | CS                | GP17       |
+|                        | LED+ (backlight)  | GP22 (PWM) |
+|                        | LED−              | GND        |
+|                        | VCC               | 3V3        |
+|                        | GND               | GND        |
+| Rotary encoder         | CLK               | GP10       |
+|                        | DT                | GP11       |
+|                        | SW (push switch)  | GP15       |
+|                        | + / GND           | 3V3 / GND  |
+| `+` button             | one leg           | GP4        |
+|                        | other leg         | GND        |
+| `−` button             | one leg           | GP3        |
+|                        | other leg         | GND        |
+| Battery (optional)     | switched +        | VSYS       |
+|                        | −                 | GND        |
 
 ## Prerequisites
 

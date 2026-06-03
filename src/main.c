@@ -9,7 +9,7 @@
 //   ENC CLK  → GP10      ENC DT  → GP11
 //   ENC SW   → GP12      ENC SW  → GP15 (bridged, wake pin)
 //   ENC +    → 3V3       ENC GND → GND
-//   INC btn  → GP4 + GND   (moved from GP2 — GP2 damaged)
+//   INC btn  → GP4 + GND
 //   DEC btn  → GP3 + GND
 //   Battery  → VSYS (Pin 39) via switch
 
