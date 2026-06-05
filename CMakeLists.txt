@@ -18,6 +18,12 @@ add_executable(polly_counter
     src/buttons.c
     src/power.c
     src/pet.c
+    src/counter.c
+    src/rep.c
+    src/countdown.c
+    src/stopwatch.c
+    src/settings.c
+    src/menu.c
 )
 
 target_include_directories(polly_counter PRIVATE src)

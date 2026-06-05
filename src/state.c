@@ -6,23 +6,46 @@
 #include "hardware/flash.h"
 #include "hardware/sync.h"
 
-// Reserve the final sector of the 2 MB flash for our state.
-// Pico W has 2 MB flash; classic Pico has 2 MB as well. We store at the very
-// end so we never collide with program code.
 #define STATE_FLASH_OFFSET (PICO_FLASH_SIZE_BYTES - FLASH_SECTOR_SIZE)
 
-#define STATE_MAGIC 0x53544348u  // "STCH"
-#define SAVE_DELAY_MS 5000
+#define STATE_MAGIC_V1 0x53544348u  // "STCH" — legacy single-counter record
+#define STATE_MAGIC_V2 0x504F4C32u  // "POL2" — multi-program record
+#define SAVE_DELAY_MS  5000
+
+#define DEFAULT_AUTO_DIM_MS    (30u  * 1000u)
+#define DEFAULT_AUTO_SLEEP_MS  (10u  * 60u * 1000u)
+#define DEFAULT_BRIGHTNESS_PCT 100
 
 typedef struct {
-    uint32_t magic;
+    uint32_t magic;        // STATE_MAGIC_V1
     uint32_t count;
     uint32_t target;
     uint32_t crc;
-} state_record_t;
+} state_record_v1_t;
 
-static uint32_t s_count  = 0;
-static uint32_t s_target = 0;
+typedef struct {
+    uint32_t magic;        // STATE_MAGIC_V2
+    uint32_t version;      // 1
+    uint32_t current_program;
+
+    uint32_t count;
+    uint32_t target;
+
+    uint32_t rep_target_reps;
+    uint32_t rep_target_sets;
+
+    uint32_t countdown_seconds;
+
+    uint32_t brightness_pct;
+    uint32_t auto_sleep_ms;
+    uint32_t auto_dim_ms;
+
+    uint32_t reserved[8];
+
+    uint32_t crc;
+} state_record_v2_t;
+
+static state_record_v2_t s = {0};
 
 static bool     s_dirty = false;
 static uint32_t s_last_change_ms = 0;
@@ -39,40 +62,55 @@ static uint32_t crc32(const void *data, size_t len) {
     return ~crc;
 }
 
-void state_load(void) {
-    const state_record_t *rec =
-        (const state_record_t *)(XIP_BASE + STATE_FLASH_OFFSET);
+static void set_defaults(void) {
+    memset(&s, 0, sizeof(s));
+    s.magic           = STATE_MAGIC_V2;
+    s.version         = 1;
+    s.current_program = PROGRAM_COUNTER;
+    s.rep_target_reps   = 10;
+    s.rep_target_sets   = 3;
+    s.countdown_seconds = 30;
+    s.brightness_pct  = DEFAULT_BRIGHTNESS_PCT;
+    s.auto_sleep_ms   = DEFAULT_AUTO_SLEEP_MS;
+    s.auto_dim_ms     = DEFAULT_AUTO_DIM_MS;
+}
 
-    if (rec->magic == STATE_MAGIC) {
+void state_load(void) {
+    set_defaults();
+
+    const uint32_t *magic = (const uint32_t *)(XIP_BASE + STATE_FLASH_OFFSET);
+
+    if (*magic == STATE_MAGIC_V2) {
+        const state_record_v2_t *rec =
+            (const state_record_v2_t *)(XIP_BASE + STATE_FLASH_OFFSET);
         uint32_t expected = crc32(rec, sizeof(*rec) - sizeof(uint32_t));
         if (expected == rec->crc) {
-            s_count  = rec->count;
-            s_target = rec->target;
-            s_dirty  = false;
-            s_last_change_ms = 0;
-            return;
+            s = *rec;
+        }
+    } else if (*magic == STATE_MAGIC_V1) {
+        const state_record_v1_t *rec =
+            (const state_record_v1_t *)(XIP_BASE + STATE_FLASH_OFFSET);
+        uint32_t expected = crc32(rec, sizeof(*rec) - sizeof(uint32_t));
+        if (expected == rec->crc) {
+            s.count  = rec->count;
+            s.target = rec->target;
         }
     }
-    // Fresh / corrupt — start at zero
-    s_count = 0;
-    s_target = 0;
+
     s_dirty = false;
     s_last_change_ms = 0;
 }
 
 void state_save(void) {
-    state_record_t rec = {
-        .magic  = STATE_MAGIC,
-        .count  = s_count,
-        .target = s_target,
-        .crc    = 0,
-    };
-    rec.crc = crc32(&rec, sizeof(rec) - sizeof(uint32_t));
+    s.magic   = STATE_MAGIC_V2;
+    s.version = 1;
+    s.crc = crc32(&s, sizeof(s) - sizeof(uint32_t));
 
-    // Flash writes must be a multiple of FLASH_PAGE_SIZE (256B).
+    // Pad to a whole flash page (256B); record is well under that.
+    _Static_assert(sizeof(state_record_v2_t) <= FLASH_PAGE_SIZE, "state too big");
     uint8_t page[FLASH_PAGE_SIZE];
     memset(page, 0xFF, sizeof(page));
-    memcpy(page, &rec, sizeof(rec));
+    memcpy(page, &s, sizeof(s));
 
     uint32_t ints = save_and_disable_interrupts();
     flash_range_erase(STATE_FLASH_OFFSET, FLASH_SECTOR_SIZE);
@@ -83,7 +121,7 @@ void state_save(void) {
     s_last_change_ms = 0;
 }
 
-static void mark_changed(void) {
+void state_mark_dirty(void) {
     s_dirty = true;
     s_last_change_ms = to_ms_since_boot(get_absolute_time());
 }
@@ -96,31 +134,93 @@ void state_tick(void) {
     }
 }
 
-uint32_t state_get_count(void)  { return s_count; }
-uint32_t state_get_target(void) { return s_target; }
+bool state_is_dirty(void) { return s_dirty; }
+
+program_id_t state_get_current_program(void) {
+    if (s.current_program >= PROGRAM__COUNT) return PROGRAM_COUNTER;
+    return (program_id_t)s.current_program;
+}
+void state_set_current_program(program_id_t id) {
+    if ((uint32_t)id == s.current_program) return;
+    s.current_program = (uint32_t)id;
+    state_mark_dirty();
+}
+
+// ── Counter ────────────────────────────────────────────────────────────────
+uint32_t state_get_count(void)  { return s.count; }
+uint32_t state_get_target(void) { return s.target; }
 
 void state_increment(void) {
-    if (s_count >= 999) return;
-    s_count++;
-    mark_changed();
+    if (s.count >= 999) return;
+    s.count++;
+    state_mark_dirty();
 }
-
 void state_decrement(void) {
-    if (s_count > 0) {
-        s_count--;
-        mark_changed();
-    }
+    if (s.count > 0) { s.count--; state_mark_dirty(); }
 }
-
 void state_reset_count(void) {
-    s_count = 0;
-    mark_changed();
+    s.count = 0;
+    state_mark_dirty();
 }
-
 void state_set_target(uint32_t value) {
     if (value > 999) value = 999;
-    s_target = value;
-    mark_changed();
+    s.target = value;
+    state_mark_dirty();
 }
 
-bool state_is_dirty(void) { return s_dirty; }
+// ── Rep counter ────────────────────────────────────────────────────────────
+uint32_t state_rep_get_target_reps(void) { return s.rep_target_reps; }
+uint32_t state_rep_get_target_sets(void) { return s.rep_target_sets; }
+void state_rep_set_target_reps(uint32_t v) {
+    if (v > 999) v = 999;
+    if (v < 1)   v = 1;
+    s.rep_target_reps = v;
+    state_mark_dirty();
+}
+void state_rep_set_target_sets(uint32_t v) {
+    if (v > 999) v = 999;
+    if (v < 1)   v = 1;
+    s.rep_target_sets = v;
+    state_mark_dirty();
+}
+
+// ── Countdown ──────────────────────────────────────────────────────────────
+uint32_t state_countdown_get_seconds(void) { return s.countdown_seconds; }
+void state_countdown_set_seconds(uint32_t v) {
+    if (v > 5999) v = 5999;   // 99:59 max
+    s.countdown_seconds = v;
+    state_mark_dirty();
+}
+
+// ── Settings ───────────────────────────────────────────────────────────────
+uint8_t  state_settings_brightness(void) {
+    uint32_t v = s.brightness_pct;
+    if (v > 100) v = 100;
+    if (v < 5)   v = 5;
+    return (uint8_t)v;
+}
+uint32_t state_settings_auto_sleep_ms(void) {
+    return s.auto_sleep_ms ? s.auto_sleep_ms : DEFAULT_AUTO_SLEEP_MS;
+}
+uint32_t state_settings_auto_dim_ms(void) {
+    return s.auto_dim_ms ? s.auto_dim_ms : DEFAULT_AUTO_DIM_MS;
+}
+void state_settings_set_brightness(uint8_t pct) {
+    if (pct > 100) pct = 100;
+    if (pct < 5)   pct = 5;
+    s.brightness_pct = pct;
+    state_mark_dirty();
+}
+void state_settings_set_auto_sleep_ms(uint32_t ms) {
+    s.auto_sleep_ms = ms;
+    state_mark_dirty();
+}
+void state_settings_set_auto_dim_ms(uint32_t ms) {
+    s.auto_dim_ms = ms;
+    state_mark_dirty();
+}
+
+void state_reset_all(void) {
+    set_defaults();
+    state_save();
+}

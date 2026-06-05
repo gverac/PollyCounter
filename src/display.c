@@ -465,6 +465,16 @@ void display_update_target(uint32_t count, uint32_t target) {
     display_draw_screen(count, target);
 }
 
+void display_text(const char *s, int x, int y, int scale, uint16_t color) {
+    if (scale < 1) scale = 1;
+    fb_8x8_text_scaled(s, x, y, scale, color);
+}
+
+int display_text_width(const char *s, int scale) {
+    if (scale < 1) scale = 1;
+    return fb_8x8_text_w_scaled(s, scale);
+}
+
 void display_show_message(const char *line1, const char *line2, uint16_t color) {
     gfx_clear(C_BLACK);
     int w1 = fb_8x8_text_w(line1);

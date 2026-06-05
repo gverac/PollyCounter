@@ -1,8 +1,12 @@
-# Stitch Counter
+# PollyCounter
 
-A stitch counter for knitting/crochet running on a Raspberry Pi Pico (RP2040)
-with a 128×160 ST7735 SPI TFT display, a rotary encoder, and two side buttons.
-Written in C against the Pico SDK.
+A pocket(ish)-sized multi-program counter and timer running on a Raspberry Pi Pico
+(RP2040) with a 128×160 ST7735 SPI TFT display, a rotary encoder, and two side
+buttons. Written in C against the Pico SDK.
+
+It started life as a stitch counter for knitting/crochet — that mode is still
+the default — but it now also runs a rep counter, a countdown timer, a
+stopwatch, a settings screen, and a sheep tamagotchi easter egg.
 
 > ## ⚠️ Disclaimer
 >
@@ -12,61 +16,156 @@ Written in C against the Pico SDK.
 > SDK versions, and toolchain quirks can all shift things around. Treat the
 > code as a starting point, not a polished product, and expect to debug.
 
-## What it does
-
-This device is used to count things. It was made to count rows while knitting,
-but it can count anything. The screen shows the current **count** and a
-**target**. The count is persisted to flash, so it survives sleep and
-power-off.
-
 ## 3D Models
 
 You can find STLs and STEP files for this project in Printables [here](https://www.printables.com/model/1742448-polly-counter-a-knitting-counter).
 
-### Controls
+## Programs
 
-- **+ button** — increment the count by one.
-- **− button** — decrement the count by one (won't go below zero).
-- **Rotary encoder (turn)** — adjust the target up or down.
+PollyCounter is organised as a small set of selectable **programs**. The device
+boots back into whichever program was active last. Persistent state (counts,
+targets, configured durations, settings) survives sleep and power-off.
+
+### Global controls
+
+These work in every program:
+
+- **Encoder long press** — open the program **menu**.
+- **Encoder double press** — save state and enter dormant sleep immediately.
+  Press the encoder again to wake. (Since "Sleep" is the top entry in the
+  menu, *long press → short press* also sleeps.)
+- **Hold + and − for 5 seconds** — summon Thelma, the sheep (easter egg).
+- **Auto-sleep** — after a stretch of inactivity the screen dims, then the
+  device goes dormant on its own. Both timeouts are configurable in Settings.
+
+### Menu
+
+Encoder rotate to scroll, short press to select, long press to close.
+
+The entries are: **Sleep · Counter · Rep Counter · Countdown · Stopwatch ·
+Settings · Flash mode**.
+
+### Counter
+
+The classic stitch-counter screen. Shows the current **count** and a **target**;
+hitting the target plays a small fireworks celebration.
+
+- **+ button** — increment.
+- **− button** — decrement (won't go below zero).
+- **Rotary encoder (turn)** — adjust the target.
 - **Encoder short press** — reset the count to zero.
-- **Encoder long press** — save state and enter dormant sleep. Press the
-  encoder again to wake.
-- **Auto-sleep** — after a stretch of inactivity, the device dims and then
-  goes to dormant sleep on its own.
+
+### Rep Counter
+
+Tracks **reps** within a **set**. On entry you set the targets first, then the
+device drops into a live counting screen.
+
+Setup:
+
+- Rotate to set the **target reps**, encoder short press to confirm.
+- Rotate to set the **target sets**, encoder short press to confirm.
+
+Live counting:
+
+- **+ button** — add a rep. On reaching the target, sets++ and reps reset to 0.
+- **− button** — remove a rep. If reps are already 0 and there's a completed
+  set, roll back: sets-- and reps = target_reps − 1.
+- **Encoder short press** — reset reps & sets to 0 (targets are preserved).
+  To change the targets, exit to the menu and re-enter the program.
+
+### Countdown
+
+A simple count-down timer (mm:ss) that can pause and resume.
+
+Setup:
+
+- Rotate to adjust the active digit pair. A blinking peach underline shows
+  which one you're editing.
+- **Encoder short press** — toggle between **MIN** and **SEC**.
+- **+ button** — start the timer.
+
+Running / paused:
+
+- **− button** — pause. **+** or **−** resumes.
+- **Encoder short press** — go back to setup (re-edit minutes/seconds).
+
+When the timer reaches 0 it shows a **DONE!** screen indefinitely until you:
+
+- **+ button** — restart immediately with the same time.
+- **− button** — dismiss (returns to a "READY" idle screen; + starts again).
+- **Encoder short press** — re-enter setup.
+
+### Stopwatch
+
+A mm:ss.cs stopwatch.
+
+- **+ button** — start / stop.
+- **− button** — reset to 0 (only while stopped).
+- **Encoder short press** — record a lap (shown below while running).
+
+### Settings
+
+A four-row screen edited with the encoder.
+
+- Rotate to move the cursor between rows.
+- **Encoder short press** — enter edit mode on the highlighted row (turns it
+  peach); rotate to change the value; short press again to commit.
+- **− button** — cancel an edit, or cancel the reset confirmation.
+
+Rows:
+
+- **BRIGHT** — backlight brightness (5–100 %).
+- **SLEEP** — auto-sleep timeout (30 s – 1 h).
+- **DIM** — auto-dim timeout (5 s – 10 min).
+- **RESET** — wipe all persisted state back to defaults. Asks for confirmation:
+  encoder short press to confirm, − to cancel.
+
+### Flash mode
+
+Reboots into the RP2040 USB bootloader (BOOTSEL mode) so you can drag-and-drop
+a fresh `.uf2`. To avoid accidental triggers there is an explicit confirmation:
+
+- Either select **Flash mode** from the menu **or** hold **+ + − +
+  encoder** together for 5 seconds.
+- The screen shows `FLASH MODE? — Hold + and −`. Holding **+** and **−**
+  together for ~1 second reboots into BOOTSEL.
+- Any other input (encoder rotate or press) cancels.
 
 ### Easter egg: Thelma
 
-Hold the increment and decrement buttons down for 5 seconds
-and the counter screen is replaced by a tiny sheep on a patch of grass,
-this is Thelma, the sheep. While in Tamagotchi mode the buttons do the following:
+Hold **+** and **−** down together for 5 seconds, from any program, and
+the screen is replaced by a tiny sheep on a patch of grass — Thelma. While in
+pet mode:
 
 - **+ button** — scratch the sheep (it gets happy, hearts pop out).
 - **− button** — feed the sheep (it munches, crumbs scatter).
 - **Encoder short press** — ask the sheep to do a trick (it hops).
 - **Rotary encoder (turn)** — walk the sheep left/right across the screen.
-- **Encoder long press** — exit pet mode and go to sleep.
-- **Inactivity** — after a few seconds with no input, pet mode auto-exits
-  back to the counter.
-
-### Flash-mode combo
-
-Hold **+, −, and the encoder button all at once for 5 seconds** and the
-device reboots into the RP2040 USB bootloader (BOOTSEL mode).
-Handy for re-flashing without having to physically reach the BOOTSEL button.
+- **Encoder long press** — exit pet mode, return to the previous program.
+- **Inactivity** — after a few seconds with no input, pet mode auto-exits.
 
 ## Project layout
 
 ```
 src/
-  main.c           Boot + main loop, callbacks wiring modules together
-  state.c/h        Persistent count/target — written to last flash sector with CRC
-  display.c/h      ST7735 driver (hand-rolled), screen layouts
+  main.c           Boot + main loop, program dispatch, sleep & flash-mode flow
+  program.h        Vtable interface implemented by every program
+  state.c/h        Versioned persistent record — last flash sector with CRC.
+                   Migrates from the original single-counter layout.
+  display.c/h      ST7735 driver (hand-rolled) + shared text/screen helpers
   gfx.c/h          Drawing primitives and text rendering
   font8x8.h        Embedded 8×8 bitmap font (printable ASCII)
-  encoder.c/h      IRQ-driven rotary encoder + short/long press detection
-  buttons.c/h      Debounced +/- buttons
-  power.c/h        PWM backlight, auto-dim, dormant sleep with GPIO wake
-  pet.c/h          On-screen pet animation
+  encoder.c/h      IRQ-driven rotary encoder + short/long/double-press detection
+  buttons.c/h      Debounced +/- buttons + simultaneous-hold combo
+  power.c/h        PWM backlight, configurable auto-dim, dormant sleep with
+                   GPIO wake, runtime brightness control
+  pet.c/h          Thelma (sheep tamagotchi)
+  menu.c/h         Program selection menu
+  counter.c/h      Counter program (original behavior)
+  rep.c/h          Rep counter program (reps + sets, with setup phase)
+  countdown.c/h    Countdown timer (min/sec edit, pause/resume, DONE screen)
+  stopwatch.c/h    Stopwatch (start/stop, lap, reset)
+  settings.c/h     Brightness / sleep / dim / reset-all
 tools/png2c.py     Helper to convert PNG sprites to C headers
 CMakeLists.txt
 pico_sdk_import.cmake
