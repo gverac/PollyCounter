@@ -40,7 +40,13 @@ typedef struct {
     uint32_t auto_sleep_ms;
     uint32_t auto_dim_ms;
 
-    uint32_t reserved[8];
+    uint32_t interval_work_s;
+    uint32_t interval_rest_s;
+    uint32_t interval_rounds;
+
+    uint32_t tally_count[TALLY_SLOTS];
+
+    uint32_t reserved[1];
 
     uint32_t crc;
 } state_record_v2_t;
@@ -73,6 +79,9 @@ static void set_defaults(void) {
     s.brightness_pct  = DEFAULT_BRIGHTNESS_PCT;
     s.auto_sleep_ms   = DEFAULT_AUTO_SLEEP_MS;
     s.auto_dim_ms     = DEFAULT_AUTO_DIM_MS;
+    s.interval_work_s = 30;
+    s.interval_rest_s = 10;
+    s.interval_rounds = 8;
 }
 
 void state_load(void) {
@@ -218,6 +227,51 @@ void state_settings_set_auto_sleep_ms(uint32_t ms) {
 void state_settings_set_auto_dim_ms(uint32_t ms) {
     s.auto_dim_ms = ms;
     state_mark_dirty();
+}
+
+// ── Interval timer ─────────────────────────────────────────────────────────
+uint32_t state_interval_work_s(void) { return s.interval_work_s; }
+uint32_t state_interval_rest_s(void) { return s.interval_rest_s; }
+uint32_t state_interval_rounds(void) { return s.interval_rounds; }
+
+void state_interval_set_work_s(uint32_t v) {
+    if (v < 1)    v = 1;
+    if (v > 5999) v = 5999;
+    s.interval_work_s = v; state_mark_dirty();
+}
+void state_interval_set_rest_s(uint32_t v) {
+    if (v > 5999) v = 5999;
+    s.interval_rest_s = v; state_mark_dirty();
+}
+void state_interval_set_rounds(uint32_t v) {
+    if (v < 1)  v = 1;
+    if (v > 99) v = 99;
+    s.interval_rounds = v; state_mark_dirty();
+}
+
+// ── Multi-tally ────────────────────────────────────────────────────────────
+uint32_t state_tally_count(int slot) {
+    if (slot < 0 || slot >= TALLY_SLOTS) return 0;
+    return s.tally_count[slot];
+}
+void state_tally_set_count(int slot, uint32_t v) {
+    if (slot < 0 || slot >= TALLY_SLOTS) return;
+    if (v > 9999) v = 9999;
+    s.tally_count[slot] = v; state_mark_dirty();
+}
+void state_tally_increment(int slot) {
+    if (slot < 0 || slot >= TALLY_SLOTS) return;
+    if (s.tally_count[slot] >= 9999) return;
+    s.tally_count[slot]++; state_mark_dirty();
+}
+void state_tally_decrement(int slot) {
+    if (slot < 0 || slot >= TALLY_SLOTS) return;
+    if (s.tally_count[slot] == 0) return;
+    s.tally_count[slot]--; state_mark_dirty();
+}
+void state_tally_reset(int slot) {
+    if (slot < 0 || slot >= TALLY_SLOTS) return;
+    s.tally_count[slot] = 0; state_mark_dirty();
 }
 
 void state_reset_all(void) {

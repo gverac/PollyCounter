@@ -7,8 +7,10 @@ typedef enum {
     ITEM_SLEEP,
     ITEM_COUNTER,
     ITEM_REP,
+    ITEM_TALLY,
     ITEM_COUNTDOWN,
     ITEM_STOPWATCH,
+    ITEM_INTERVAL,
     ITEM_SETTINGS,
     ITEM_FLASH,
     ITEM__COUNT
@@ -18,8 +20,10 @@ static const char *ITEM_LABEL[ITEM__COUNT] = {
     "SLEEP",
     "COUNTER",
     "REP COUNTER",
+    "MULTI-TALLY",
     "COUNTDOWN",
     "STOPWATCH",
+    "INTERVAL",
     "SETTINGS",
     "FLASH MODE",
 };
@@ -45,8 +49,10 @@ static void on_short_press(void) {
         case ITEM_SLEEP:     app_request_sleep();                 break;
         case ITEM_COUNTER:   app_switch_to(PROGRAM_COUNTER);      break;
         case ITEM_REP:       app_switch_to(PROGRAM_REP);          break;
+        case ITEM_TALLY:     app_switch_to(PROGRAM_TALLY);        break;
         case ITEM_COUNTDOWN: app_switch_to(PROGRAM_COUNTDOWN);    break;
         case ITEM_STOPWATCH: app_switch_to(PROGRAM_STOPWATCH);    break;
+        case ITEM_INTERVAL:  app_switch_to(PROGRAM_INTERVAL);     break;
         case ITEM_SETTINGS:  app_switch_to(PROGRAM_SETTINGS);     break;
         case ITEM_FLASH:     app_request_flash_mode();            break;
         default: break;
@@ -54,7 +60,6 @@ static void on_short_press(void) {
 }
 
 static void on_long_press(void) {
-    // Long press in the menu closes it (returns to previous program).
     app_close_menu();
 }
 
@@ -69,10 +74,9 @@ static void draw(void) {
     gfx_clear(C_BLACK);
     draw_centered("MENU", 6, 2, C_LABEL);
 
-    const int row_h = 18;
-    const int top_y = 32;
+    const int row_h = 16;
+    const int top_y = 30;
 
-    // Scroll so the cursor is visible (small viewport: 7 rows fit).
     const int visible = 7;
     int first = 0;
     if (ITEM__COUNT > visible) {

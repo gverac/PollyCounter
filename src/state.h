@@ -10,8 +10,12 @@ typedef enum {
     PROGRAM_COUNTDOWN = 2,
     PROGRAM_STOPWATCH = 3,
     PROGRAM_SETTINGS  = 4,
+    PROGRAM_INTERVAL  = 5,
+    PROGRAM_TALLY     = 6,
     PROGRAM__COUNT
 } program_id_t;
+
+#define TALLY_SLOTS 4
 
 void state_load(void);
 void state_save(void);   // immediate write to flash
@@ -41,6 +45,21 @@ void     state_rep_set_target_sets(uint32_t v);
 // ── Countdown ──────────────────────────────────────────────────────────────
 uint32_t state_countdown_get_seconds(void);
 void     state_countdown_set_seconds(uint32_t v);
+
+// ── Interval timer ─────────────────────────────────────────────────────────
+uint32_t state_interval_work_s(void);
+uint32_t state_interval_rest_s(void);
+uint32_t state_interval_rounds(void);
+void     state_interval_set_work_s(uint32_t v);
+void     state_interval_set_rest_s(uint32_t v);
+void     state_interval_set_rounds(uint32_t v);
+
+// ── Multi-tally ────────────────────────────────────────────────────────────
+uint32_t state_tally_count(int slot);                  // 0..TALLY_SLOTS-1
+void     state_tally_set_count(int slot, uint32_t v);
+void     state_tally_increment(int slot);
+void     state_tally_decrement(int slot);
+void     state_tally_reset(int slot);
 
 // ── Settings ───────────────────────────────────────────────────────────────
 uint8_t  state_settings_brightness(void);          // 0..100 (%)

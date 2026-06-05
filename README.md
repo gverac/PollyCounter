@@ -42,8 +42,8 @@ These work in every program:
 
 Encoder rotate to scroll, short press to select, long press to close.
 
-The entries are: **Sleep · Counter · Rep Counter · Countdown · Stopwatch ·
-Settings · Flash mode**.
+The entries are: **Sleep · Counter · Rep Counter · Multi-tally · Countdown ·
+Stopwatch · Interval · Settings · Flash mode**.
 
 ### Counter
 
@@ -72,6 +72,18 @@ Live counting:
   set, roll back: sets-- and reps = target_reps − 1.
 - **Encoder short press** — reset reps & sets to 0 (targets are preserved).
   To change the targets, exit to the menu and re-enter the program.
+
+### Multi-tally
+
+Four independent counters (A / B / C / D) shown in a 2×2 grid. Each one
+persists independently to flash. Handy when you're tracking several things at
+once — sets and reps, score in a card game, two pets fed, etc.
+
+- **Rotary encoder (turn)** — pick the active cell (peach border).
+- **+ button** — increment the active counter.
+- **− button** — decrement the active counter (won't go below zero).
+- **Encoder short press** — reset the active counter to zero. Other cells are
+  untouched.
 
 ### Countdown
 
@@ -102,6 +114,31 @@ A mm:ss.cs stopwatch.
 - **+ button** — start / stop.
 - **− button** — reset to 0 (only while stopped).
 - **Encoder short press** — record a lap (shown below while running).
+
+### Interval
+
+A Tabata-style interval timer with configurable **work**, **rest**, and
+**round count**. Auto-cycles work → rest → work → … with a colored phase
+indicator (mint = work, pink = rest, yellow = paused).
+
+Setup:
+
+- Encoder short press cycles through **WORK · REST · ROUNDS**. A blinking
+  peach underline shows the active field.
+- Rotate to adjust the active field (WORK and REST are mm:ss, ROUNDS is 1–99).
+  REST can be 0 for back-to-back work intervals.
+- **+ button** — start.
+
+Running:
+
+- The round counter ("3/8") sits above the timer.
+- **− button** — pause; **+** or **−** resumes.
+- **Encoder short press** — re-enter setup.
+
+When all rounds finish, a **DONE!** screen waits for input:
+
+- **+ button** — restart with the same settings.
+- **− button** — dismiss (returns to setup).
 
 ### Settings
 
@@ -163,8 +200,10 @@ src/
   menu.c/h         Program selection menu
   counter.c/h      Counter program (original behavior)
   rep.c/h          Rep counter program (reps + sets, with setup phase)
+  tally.c/h        Multi-tally — 4 independent counters in a 2×2 grid
   countdown.c/h    Countdown timer (min/sec edit, pause/resume, DONE screen)
   stopwatch.c/h    Stopwatch (start/stop, lap, reset)
+  interval.c/h     Interval / Tabata timer (work / rest / rounds)
   settings.c/h     Brightness / sleep / dim / reset-all
 tools/png2c.py     Helper to convert PNG sprites to C headers
 CMakeLists.txt
@@ -174,7 +213,8 @@ pico_extras_import.cmake
 
 ## Hardware
 
-- Raspberry Pi Pico (RP2040)
+- Raspberry Pi Pico (RP2040). A Pico W also works since this firmware doesn't
+  use the wireless chip.
 - ST7735 128×160 SPI TFT
 - Rotary encoder with push switch
 - Two momentary buttons (+/−)
@@ -247,7 +287,7 @@ cmake -DPICO_BOARD=pico ..
 make -j
 ```
 
-Output: `build/polly_counter.uf2`.
+Output: `build/polly_counter.uf2`. The same `.uf2` runs on a Pico W as well.
 
 ## Flash
 

@@ -24,6 +24,8 @@ add_executable(polly_counter
     src/stopwatch.c
     src/settings.c
     src/menu.c
+    src/interval.c
+    src/tally.c
 )
 
 target_include_directories(polly_counter PRIVATE src)

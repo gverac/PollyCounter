@@ -21,6 +21,8 @@
 #include "stopwatch.h"
 #include "settings.h"
 #include "menu.h"
+#include "interval.h"
+#include "tally.h"
 
 #define COMBO_HOLD_MS       5000
 #define FLASH_COMBO_HOLD_MS 5000
@@ -39,6 +41,8 @@ static void init_registry(void) {
     PROGRAMS[PROGRAM_COUNTDOWN] = &COUNTDOWN_PROGRAM;
     PROGRAMS[PROGRAM_STOPWATCH] = &STOPWATCH_PROGRAM;
     PROGRAMS[PROGRAM_SETTINGS]  = &SETTINGS_PROGRAM;
+    PROGRAMS[PROGRAM_INTERVAL]  = &INTERVAL_PROGRAM;
+    PROGRAMS[PROGRAM_TALLY]     = &TALLY_PROGRAM;
 }
 
 // ── Current program / menu state ────────────────────────────────────────────
