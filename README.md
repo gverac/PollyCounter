@@ -185,31 +185,43 @@ pet mode:
 
 ```
 src/
-  main.c           Boot + main loop, program dispatch, sleep & flash-mode flow
-  program.h        Vtable interface implemented by every program
-  state.c/h        Versioned persistent record — last flash sector with CRC.
-                   Migrates from the original single-counter layout.
-  display.c/h      ST7735 driver (hand-rolled) + shared text/screen helpers
-  gfx.c/h          Drawing primitives and text rendering
-  font8x8.h        Embedded 8×8 bitmap font (printable ASCII)
-  encoder.c/h      IRQ-driven rotary encoder + short/long/double-press detection
-  buttons.c/h      Debounced +/- buttons + simultaneous-hold combo
-  power.c/h        PWM backlight, configurable auto-dim, dormant sleep with
-                   GPIO wake, runtime brightness control
-  pet.c/h          Thelma (sheep tamagotchi)
-  menu.c/h         Program selection menu
-  counter.c/h      Counter program (original behavior)
-  rep.c/h          Rep counter program (reps + sets, with setup phase)
-  tally.c/h        Multi-tally — 4 independent counters in a 2×2 grid
-  countdown.c/h    Countdown timer (min/sec edit, pause/resume, DONE screen)
-  stopwatch.c/h    Stopwatch (start/stop, lap, reset)
-  interval.c/h     Interval / Tabata timer (work / rest / rounds)
-  settings.c/h     Brightness / sleep / dim / reset-all
-tools/png2c.py     Helper to convert PNG sprites to C headers
+  main.c             Boot + main loop, program dispatch, sleep & flash-mode flow
+  program.h          Vtable interface implemented by every program
+  state.c/h          Versioned persistent record — last flash sector with CRC.
+                     Migrates from the original single-counter layout.
+
+  hardware/          Peripheral drivers
+    encoder.c/h      IRQ-driven rotary encoder + short/long/double-press
+    buttons.c/h      Debounced +/- buttons + simultaneous-hold combo
+    power.c/h        PWM backlight, configurable auto-dim, dormant sleep
+
+  graphics/          Display stack
+    display.c/h      ST7735 driver (hand-rolled) + shared text/screen helpers
+    gfx.c/h          Framebuffer + drawing primitives
+    font8x8.h        Embedded 8×8 bitmap font (printable ASCII)
+
+  util/              Non-program glue
+    menu.c/h         Program selection menu
+
+  programs/          Each entry in the menu
+    counter.c/h      Counter (original behavior)
+    rep.c/h          Rep counter (reps + sets, with setup phase)
+    tally.c/h        Multi-tally — 4 independent counters in a 2×2 grid
+    countdown.c/h    Countdown timer (min/sec edit, pause/resume, DONE screen)
+    stopwatch.c/h    Stopwatch (start/stop, lap, reset)
+    interval.c/h     Interval / Tabata timer (work / rest / rounds)
+    settings.c/h     Brightness / sleep / dim / reset-all
+    pet.c/h          Thelma (sheep tamagotchi easter egg)
+
+tools/png2c.py       Helper to convert PNG sprites to C headers
 CMakeLists.txt
 pico_sdk_import.cmake
 pico_extras_import.cmake
 ```
+
+Headers are flat on the include path (`src/`, `src/hardware/`,
+`src/graphics/`, `src/util/`, `src/programs/`), so any module can write
+`#include "display.h"` without caring which directory the header lives in.
 
 ## Hardware
 

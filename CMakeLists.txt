@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
 
+# Emit build/compile_commands.json so clangd-based editors (VSCode + the
+# clangd extension, Neovim, etc.) can resolve Pico SDK headers and defines.
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "" FORCE)
+
 include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 include($ENV{PICO_EXTRAS_PATH}/external/pico_extras_import.cmake)
 
@@ -12,23 +16,35 @@ pico_sdk_init()
 add_executable(polly_counter
     src/main.c
     src/state.c
-    src/display.c
-    src/gfx.c
-    src/encoder.c
-    src/buttons.c
-    src/power.c
-    src/pet.c
-    src/counter.c
-    src/rep.c
-    src/countdown.c
-    src/stopwatch.c
-    src/settings.c
-    src/menu.c
-    src/interval.c
-    src/tally.c
+
+    src/hardware/encoder.c
+    src/hardware/buttons.c
+    src/hardware/power.c
+
+    src/graphics/display.c
+    src/graphics/gfx.c
+
+    src/util/menu.c
+
+    src/programs/counter.c
+    src/programs/rep.c
+    src/programs/tally.c
+    src/programs/countdown.c
+    src/programs/stopwatch.c
+    src/programs/interval.c
+    src/programs/settings.c
+    src/programs/pet.c
 )
 
-target_include_directories(polly_counter PRIVATE src)
+# Flat include paths — each module can `#include "display.h"` etc. without
+# caring which subdirectory the header lives in.
+target_include_directories(polly_counter PRIVATE
+    src
+    src/hardware
+    src/graphics
+    src/util
+    src/programs
+)
 
 target_link_libraries(polly_counter
     pico_stdlib

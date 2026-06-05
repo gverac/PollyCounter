@@ -169,13 +169,7 @@ void display_blit_full(const uint16_t *fb) {
 // 128x160 RGB565 framebuffer). display_blit_full() pushes the FB to the panel.
 
 #include "gfx.h"
-
-// ── Tamagotchi-style colors ─────────────────────────────────────────────────
-
-#define C_PASTEL_BG    0xFCD0   // deeper, more saturated tamagotchi pink
-#define C_PASTEL_INK   0x2086   // very dark navy/plum — high contrast on pink
-#define C_DIM_SEGMENT  0x18C3   // dim section of progress bar
-#define C_LIVE_SEGMENT 0xFFFF   // lit section
+// gfx.h pulls in palette.h with the named colors used below.
 
 // Particle colors — saturated, bold, picked to pop against the pink bg.
 static const uint16_t SPARK_COLORS[] = {
@@ -342,12 +336,12 @@ static void reset_particles(void) {
 // ── Scene drawing ───────────────────────────────────────────────────────────
 
 static void draw_scene(uint32_t count, uint32_t target, bool hit) {
-    uint16_t bg      = hit ? C_PASTEL_BG  : C_BLACK;
-    uint16_t ink     = hit ? C_PASTEL_INK : C_WHITE;
-    uint16_t ink_dim = hit ? 0x73AE       : 0x8410;   // greyer ink for label + goal
-    uint16_t bar_lit = hit ? C_PASTEL_INK : C_LIVE_SEGMENT;
-    uint16_t bar_dim = hit ? 0xFBB6       : C_DIM_SEGMENT;
-    uint16_t bar_brd = hit ? C_PASTEL_INK : C_WHITE;
+    uint16_t bg      = hit ? C_HIT_BG      : C_BLACK;
+    uint16_t ink     = hit ? C_HIT_INK     : C_WHITE;
+    uint16_t ink_dim = hit ? C_HIT_INK_DIM : COLOR_GRAY;
+    uint16_t bar_lit = hit ? C_HIT_INK     : C_SEGMENT_LIT;
+    uint16_t bar_dim = hit ? C_HIT_BAR_DIM : C_SEGMENT_DIM;
+    uint16_t bar_brd = hit ? C_HIT_INK     : C_WHITE;
 
     gfx_clear(bg);
 

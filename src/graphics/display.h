@@ -3,19 +3,10 @@
 
 #include <stdint.h>
 
+#include "palette.h"
+
 #define DISPLAY_WIDTH  128
 #define DISPLAY_HEIGHT 160
-
-// RGB565
-#define COLOR_BLACK   0x0000
-#define COLOR_WHITE   0xFFFF
-#define COLOR_RED     0xF800
-#define COLOR_GREEN   0x07E0
-#define COLOR_BLUE    0x001F
-#define COLOR_YELLOW  0xFFE0
-#define COLOR_CYAN    0x07FF
-#define COLOR_GRAY    0x8410
-#define COLOR_DGRAY   0x4208
 
 void display_init(void);
 void display_clear(uint16_t color);

@@ -8,26 +8,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "palette.h"
+
 #define GFX_W 128
 #define GFX_H 160
-
-// RGB565 palette — whimsical pastel set
-#define C_BLACK     0x0000
-#define C_WHITE     0xFFFF
-#define C_BG        0x18C3   // very dark indigo
-#define C_BG_HI     0x2925   // slightly lighter for top gradient
-#define C_INK       0xFFFF
-#define C_INK_DIM   0xC618
-#define C_LABEL     0x9CD3   // soft lilac
-#define C_ACCENT    0xFD6A   // peach
-#define C_ACCENT_HI 0xFEB0   // lighter peach for gradient top
-#define C_MINT      0x6F9D
-#define C_MINT_HI   0x8FFE
-#define C_PINK      0xFC9F   // bubblegum
-#define C_PINK_HI   0xFE5F
-#define C_YELLOW    0xFEE0
-#define C_LAVENDER  0xB57F
-#define C_DIVIDER   0x4208
 
 // Lifecycle
 void gfx_init(void);              // sets up DMA, requires display_init() done
