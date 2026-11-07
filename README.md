@@ -233,30 +233,34 @@ Headers are flat on the include path (`src/`, `src/hardware/`,
 
 ### Wiring / pin map
 
-All GPIO numbers are RP2040 GPIO (the `GPxx` labels on the Pico pinout, not
-the physical header pin numbers).
+- `GPxx` are RP2040 GPIO numbers (the labels on the Pico pinout).
+- "Header pin" is the physical pin number 1-40 on the Pico.
+- Any GND pin works for the GND rows.
 
-| Peripheral             | Signal            | Pico pin   |
-|------------------------|-------------------|----------  |
-| ST7735 TFT             | SCK               | GP18       |
-|                        | SDA / MOSI        | GP19       |
-|                        | RST               | GP20       |
-|                        | A0 / DC           | GP21       |
-|                        | CS                | GP17       |
-|                        | LED+ (backlight)  | GP22 (PWM) |
-|                        | LED−              | GND        |
-|                        | VCC               | 3V3        |
-|                        | GND               | GND        |
-| Rotary encoder         | CLK               | GP10       |
-|                        | DT                | GP11       |
-|                        | SW (push switch)  | GP15       |
-|                        | + / GND           | 3V3 / GND  |
-| `+` button             | one leg           | GP4        |
-|                        | other leg         | GND        |
-| `−` button             | one leg           | GP3        |
-|                        | other leg         | GND        |
-| Battery (optional)     | switched +        | VSYS       |
-|                        | −                 | GND        |
+
+| Peripheral             | Signal            | Pico pin   | Header pin |
+|------------------------|-------------------|----------  |------------|
+| ST7735 TFT             | SCK               | GP18       | 24         |
+|                        | SDA / MOSI        | GP19       | 25         |
+|                        | RST               | GP20       | 26         |
+|                        | A0 / DC           | GP21       | 27         |
+|                        | CS                | GP17       | 22         |
+|                        | LED+ (backlight)  | GP22 (PWM) | 29         |
+|                        | LED−              | GND        |            |
+|                        | VCC               | 3V3        | 36         |
+|                        | GND               | GND        |            |
+| Rotary encoder         | CLK               | GP10       | 14         |
+|                        | DT                | GP11       | 15         |
+|                        | SW (push switch)  | GP15       | 20         |
+|                        | + / GND           | 3V3 / GND  |            |
+| `+` button             | one leg           | GP4        | 6          |
+|                        | other leg         | GND        |            |
+| `−` button             | one leg           | GP3        | 5          |
+|                        | other leg         | GND        |            |
+| Battery                | + (via optional switch) | VSYS | 39         |
+|                        | −                 | GND        |            |
+
+![Wiring schematic](docs/schematic.svg)
 
 ## Prerequisites
 
